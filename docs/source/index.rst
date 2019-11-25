@@ -7,8 +7,8 @@ starspot
 ====================================
 
 *starspot* is a tool for measuring stellar rotation periods using
-Lomb-Scargle (LS) periodograms, autocorrelation functions (ACFs) and Gaussian
-processes (GPs).
+Lomb-Scargle (LS) periodograms, autocorrelation functions (ACFs), phase
+dispersion minimization (PDM) and Gaussian processes (GPs).
 It uses the `astropy <http://www.astropy.org/>`_ implementation of
 `Lomb-Scargle periodograms
 <http://docs.astropy.org/en/stable/stats/lombscargle.html>`_, and the
@@ -28,11 +28,34 @@ Example usage
 -------------
 ::
 
+    import numpy as np
     import starspot as ss
 
+    # Generate some data
+    time = np.linspace(0, 100, 10000)
+    period = 10
+    w = 2*np.pi/period
+    flux = np.sin(w*time) + np.random.randn(len(time))*1e-2 + \
+        np.random.randn(len(time))*.01
+    flux_err = np.ones_like(flux)*.01
+
     rotate = ss.RotationModel(time, flux, flux_err)
-    lomb_scargle_period = rotate.LS_rotation()
-    acf_period = rotate.ACF_rotation()
+
+    # Calculate the Lomb Scargle periodogram period (highest peak in the periodogram).
+    lomb_scargle_period = rotate.ls_rotation()
+
+    # Calculate the autocorrelation function (ACF) period (highest peak in the ACF).
+    # This is for evenly sampled data only -- time between observations is 'interval'.
+    acf_period = rotate.acf_rotation(interval=np.diff(time)[0])
+
+    # Calculate the phase dispersion minimization period (period of lowest dispersion).
+    period_grid = np.linspace(5, 20, 1000)
+    pdm_period = rotate.pdm_rotation(period_grid)
+
+    print(lomb_scargle_period, acf_period, pdm_period)
+    >> 9.99892010582963 10.011001100110011 10.0
+
+    # Calculate a Gaussian process rotation period
     gp_period = rotate.GP_rotation()
 
 .. Contents:
