@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import starrotate as sr
-from starrotate.rotation_tools import download_light_curves
+import starspot as sr
+from starspot.rotation_tools import download_light_curves
 
 
 def test_transit_mask():
