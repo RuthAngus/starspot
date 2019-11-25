@@ -28,9 +28,9 @@ Example usage
 -------------
 ::
 
-    import starspot as sr
+    import starspot as ss
 
-    rotate = sr.RotationModel(time, flux, flux_err)
+    rotate = ss.RotationModel(time, flux, flux_err)
     lomb_scargle_period = rotate.LS_rotation()
     acf_period = rotate.ACF_rotation()
     gp_period = rotate.GP_rotation()
