@@ -1,7 +1,7 @@
 starspot
 ====================================
 
-.. image:: https://raw.githubusercontent.com/RuthAngus/starspot/blob/master/docs/logo.png
+.. image:: https://github.com/RuthAngus/starspot/blob/master/docs/logo.png?raw=true
    :width: 600
 
 Check out the `documentation <https://starspot.readthedocs.io/en/latest/>`_!
