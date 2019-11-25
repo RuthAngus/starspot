@@ -37,7 +37,7 @@ class RotationModel(object):
         # self.LS_rotation()
         # self.ACF_rotation()
 
-    def plot_lc(self):
+    def lc_plot(self):
         """
         Plot the light curve.
         """
@@ -47,7 +47,7 @@ class RotationModel(object):
         plt.ylabel("Relative Flux");
         plt.subplots_adjust(bottom=.2)
 
-    def LS_rotation(self, high_pass=False, min_period=1., max_period=30.,
+    def ls_rotation(self, high_pass=False, min_period=1., max_period=30.,
                     samples_per_peak=50):
         # filter_period=None, order=3,
         """
@@ -112,7 +112,7 @@ class RotationModel(object):
         return self.ls_period
 
 
-    def pgram_plot(self):
+    def ls_plot(self):
         """
         Make a plot of the periodogram.
 
@@ -128,7 +128,7 @@ class RotationModel(object):
         plt.ylabel("Power");
         plt.subplots_adjust(left=.15, bottom=.15)
 
-    def ACF_rotation(self, interval):
+    def acf_rotation(self, interval):
         """
         Calculate a rotation period based on an autocorrelation function.
 
@@ -161,7 +161,7 @@ class RotationModel(object):
         plt.xlim(0, max(self.lags))
         plt.subplots_adjust(left=.15, bottom=.15)
 
-    def PDM(self, period_grid, pdm_nbins=10):
+    def pdm_rotation(self, period_grid, pdm_nbins=10):
         """
         Calculate the optimum period from phase dispersion minimization.
 
@@ -190,7 +190,7 @@ class RotationModel(object):
         self.pdm_period = period_grid[ind]
         return period_grid[ind]
 
-    def PDM_plot(self):
+    def pdm_plot(self):
         """
         Make a plot of the phase dispersion function.
 
@@ -220,7 +220,7 @@ class RotationModel(object):
         ax3.axvline(self.pdm_period, color=".5", ls="--")
         plt.tight_layout()
 
-    def GP_rotation(self, init_period=None, tune=2000, draws=2000,
+    def gp_rotation(self, init_period=None, tune=2000, draws=2000,
                     prediction=True, cores=None):
         """
         Calculate a rotation period using a Gaussian process method.
