@@ -1,5 +1,10 @@
-starspot
-====================================
+.. raw:: html
+
+    <center>
+    <div><img src="https://raw.githubusercontent.com/RuthAngus/starspot/master/docs/logo.png" width=100></div>
+    <div><strong>starspot</strong></div>
+    </center>
+
 
 Check out the `documentation <https://starspot.readthedocs.io/en/latest/>`_!
 
@@ -64,6 +69,3 @@ Copyright 2018, Ruth Angus.
 The source code is made available under the terms of the MIT license.
 
 If you make use of this code, please cite this package and its dependencies.
-
-.. image:: https://github.com/RuthAngus/starspot/blob/master/docs/logo.png?raw=true
-   :width: 100
