@@ -1,5 +1,10 @@
-starspot
-====================================
+.. raw:: html
+
+    <center>
+    <p align="center"><img src="https://raw.githubusercontent.com/RuthAngus/starspot/master/docs/logo.png" width=100>
+    <br><strong>starspot</strong></p>
+    </center>
+
 
 Check out the `documentation <https://starspot.readthedocs.io/en/latest/>`_!
 
@@ -23,7 +28,8 @@ observatories, LS periodograms and GPs are preferable to ACFs.
 
 Example usage
 -------------
-::
+
+.. code-block:: python
 
     import numpy as np
     import starspot as ss
@@ -64,6 +70,3 @@ Copyright 2018, Ruth Angus.
 The source code is made available under the terms of the MIT license.
 
 If you make use of this code, please cite this package and its dependencies.
-
-.. image:: https://github.com/RuthAngus/starspot/blob/master/docs/logo.png?raw=true
-   :width: 100
