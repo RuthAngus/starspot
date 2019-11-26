@@ -28,7 +28,8 @@ observatories, LS periodograms and GPs are preferable to ACFs.
 
 Example usage
 -------------
-::
+
+.. code-block:: python
 
     import numpy as np
     import starspot as ss
