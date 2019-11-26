@@ -1,8 +1,8 @@
 .. raw:: html
 
     <center>
-    <div><img src="https://raw.githubusercontent.com/RuthAngus/starspot/master/docs/logo.png" width=100></div>
-    <div><strong>starspot</strong></div>
+    <p align="center"><img src="https://raw.githubusercontent.com/RuthAngus/starspot/master/docs/logo.png" width=100>
+    <br><strong>starspot</strong></p>
     </center>
 
 
