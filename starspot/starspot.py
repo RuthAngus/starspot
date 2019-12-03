@@ -118,7 +118,7 @@ class RotationModel(object):
 
         """
 
-        plt.figure(figsize=(16, 9))
+        fig = plt.figure(figsize=(16, 9))
         plt.plot(-np.log10(self.freq), self.power, "k", zorder=0)
         plt.axvline(np.log10(self.ls_period), color="C1", lw=4, alpha=0.5,
                     zorder=1)
@@ -127,6 +127,7 @@ class RotationModel(object):
         plt.xlabel("log10(Period [days])")
         plt.ylabel("Power");
         plt.subplots_adjust(left=.15, bottom=.15)
+        return fig
 
     def acf_rotation(self, interval):
         """
@@ -153,13 +154,14 @@ class RotationModel(object):
         Make a plot of the autocorrelation function.
 
         """
-        plt.figure(figsize=(16, 9))
+        fig = plt.figure(figsize=(16, 9))
         plt.plot(self.lags, self.acf, "k")
         plt.axvline(self.acf_period, color="C1")
         plt.xlabel("Period [days]")
         plt.ylabel("Correlation")
         plt.xlim(0, max(self.lags))
         plt.subplots_adjust(left=.15, bottom=.15)
+        return fig
 
     def pdm_rotation(self, period_grid, pdm_nbins=10):
         """
@@ -219,6 +221,7 @@ class RotationModel(object):
         ax3.set_ylabel("Dispersion")
         ax3.axvline(self.pdm_period, color=".5", ls="--")
         plt.tight_layout()
+        return fig
 
     def gp_rotation(self, init_period=None, tune=2000, draws=2000,
                     prediction=True, cores=None):
@@ -254,7 +257,7 @@ class RotationModel(object):
 
         if init_period is None:
             # Calculate ls period
-            init_period = self.LS_rotation()
+            init_period = self.ls_rotation()
 
         with pm.Model() as model:
 
