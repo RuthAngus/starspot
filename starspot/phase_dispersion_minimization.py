@@ -4,7 +4,6 @@ Phase dispersion minimisation algorithm, Stellingwerf (1978).
 
 import numpy as np
 import scipy.optimize as sco
-import matplotlib.pyplot as plt
 
 
 def sj2(x, meanx, N):
@@ -122,7 +121,8 @@ def gaussian(pars, x):
     A Gaussian, with a baseline of b.
     """
     A, b, mu, sigma = pars
-    return b + A/(np.sqrt(2*np.pi)*sigma**2) \
+    # return b + A/(np.sqrt(2*np.pi)*sigma**2) \
+    return b + A \
         * np.exp(-.5*(x - mu)**2/sigma**2)
 
 
@@ -174,13 +174,14 @@ def estimate_uncertainty(period_grid, phi, best_period):
     # If the uncertainty is close to 50%, the fit might have gone wrong:
     # fit a Gaussian to a window that is a percentage of the period.
     if result.x[-1]/best_period > .4:
+        print("fitting to a limited range")
         upper_lim = best_period + .3*best_period
         upper_lim = best_period - .3*best_period
         result, dip_x, dip_y = fit_gaussian(
             period_grid, phi, upper_lim, lower_lim, best_period)
 
-    plt.plot(dip_x, gaussian(result.x, dip_x))
     a, b, mu, sigma = result.x
+    print("a = ", a)
 
     return sigma, mu, a, b
 
