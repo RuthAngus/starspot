@@ -234,7 +234,7 @@ def test_uncertainty():
 
     # 50 day period
     np.random.seed(42)
-    t = np.linspace(0, 1000, 1000)
+    t = np.linspace(0, 100, 1000)
     p = 50
     w = 2*np.pi/p
     x = np.sin(w*t) + np.random.randn(len(t))*1e-2
@@ -258,7 +258,6 @@ def test_uncertainty():
     print(pdm_period, period_err)
     fig = rm.pdm_plot()
     plt.savefig("pdm_test_100")
-
 
 
 if __name__ == "__main__":

@@ -146,9 +146,6 @@ def estimate_uncertainty(period_grid, phi, best_period):
 
     """
 
-    # If the maximum range of the grid is less than
-    # if
-
     # Peak finder
     def peaks(y):
         return np.array([i for i in range(1, len(y)-1) if y[i-1] <
@@ -160,6 +157,8 @@ def estimate_uncertainty(period_grid, phi, best_period):
     peak_pos = period_grid[pks]
     lower_peaks = peak_pos < best_period
     upper_peaks = peak_pos > best_period
+
+    # Catch occasions where no adjacent peaks are found
     if hasattr(peak_pos[lower_peaks], "len"):
         lower_lim = peak_pos[lower_peaks][-1]
     else:
@@ -169,14 +168,30 @@ def estimate_uncertainty(period_grid, phi, best_period):
     else:
         upper_lim = max(period_grid)
 
+    result, dip_x, dip_y = fit_gaussian(
+        period_grid, phi, upper_lim, lower_lim, best_period)
+
+    # If the uncertainty is close to 50%, the fit might have gone wrong:
+    # fit a Gaussian to a window that is a percentage of the period.
+    if result.x[-1]/best_period > .4:
+        upper_lim = best_period + .3*best_period
+        upper_lim = best_period - .3*best_period
+        result, dip_x, dip_y = fit_gaussian(
+            period_grid, phi, upper_lim, lower_lim, best_period)
+
+    plt.plot(dip_x, gaussian(result.x, dip_x))
+    a, b, mu, sigma = result.x
+
+    return sigma, mu, a, b
+
+
+def fit_gaussian(period_grid, phi, upper_lim, lower_lim, best_period):
     m = (lower_lim < period_grid) * (period_grid < upper_lim)
     dip_x, dip_y = period_grid[m], phi[m]
 
-    #        Amplitude  | Baseline | mean     |  sigma
+    # Amplitude, Baseline, mean, sigma
     bnds = ((None, None), (0, 2), (None, None), (None, None))
 
     result = sco.minimize(nll, [-.1, 1., best_period, .1*best_period],
-                          args=(dip_x, dip_y), bounds=bnds)
-    plt.plot(dip_x, gaussian(result.x, dip_x))
-    a, b, mu, sigma = result.x
-    return sigma, mu, a, b
+                        args=(dip_x, dip_y), bounds=bnds)
+    return result, dip_x, dip_y
