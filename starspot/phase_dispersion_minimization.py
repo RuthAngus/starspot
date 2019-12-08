@@ -146,6 +146,9 @@ def estimate_uncertainty(period_grid, phi, best_period):
 
     """
 
+    # If the maximum range of the grid is less than
+    # if
+
     # Peak finder
     def peaks(y):
         return np.array([i for i in range(1, len(y)-1) if y[i-1] <
@@ -157,14 +160,23 @@ def estimate_uncertainty(period_grid, phi, best_period):
     peak_pos = period_grid[pks]
     lower_peaks = peak_pos < best_period
     upper_peaks = peak_pos > best_period
-    lower_lim = peak_pos[lower_peaks][-1]
-    upper_lim = peak_pos[upper_peaks][0]
+    if hasattr(peak_pos[lower_peaks], "len"):
+        lower_lim = peak_pos[lower_peaks][-1]
+    else:
+        lower_lim = min(period_grid)
+    if hasattr(peak_pos[upper_peaks], "len"):
+        upper_lim = peak_pos[upper_peaks][0]
+    else:
+        upper_lim = max(period_grid)
 
     m = (lower_lim < period_grid) * (period_grid < upper_lim)
     dip_x, dip_y = period_grid[m], phi[m]
 
+    #        Amplitude  | Baseline | mean     |  sigma
+    bnds = ((None, None), (0, 2), (None, None), (None, None))
+
     result = sco.minimize(nll, [-.1, 1., best_period, .1*best_period],
-                          args=(dip_x, dip_y))
+                          args=(dip_x, dip_y), bounds=bnds)
     plt.plot(dip_x, gaussian(result.x, dip_x))
     a, b, mu, sigma = result.x
-    return sigma, mu, a
+    return sigma, mu, a, b

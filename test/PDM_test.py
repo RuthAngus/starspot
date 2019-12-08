@@ -1,6 +1,7 @@
 import numpy as np
 from starspot import phase_dispersion_minimization as pdm
 import matplotlib.pyplot as plt
+import starspot as ss
 
 
 def test_sj2():
@@ -177,22 +178,87 @@ def test_phi():
 def test_uncertainty():
 
     # Generate some data
+    np.random.seed(42)
     t = np.linspace(0, 100, 1000)
     p = 10
     w = 2*np.pi/p
     x = np.sin(w*t) + np.random.randn(len(t))*1e-2
     xerr = np.ones_like(x)*1e-2
 
-    import starspot as ss
     rm = ss.RotationModel(t, x, xerr)
     nperiods = 200
     period_grid = np.linspace(1, 20, nperiods)
     pdm_period, period_err = rm.pdm_rotation(period_grid)
     print(pdm_period, period_err)
     fig = rm.pdm_plot()
-    plt.axvline(pdm_period - period_err, ls="--", lw=.5)
-    plt.axvline(pdm_period + period_err, ls="--", lw=.5)
     plt.savefig("pdm_test")
+
+    # 2 day period
+    np.random.seed(42)
+    p = 2
+    w = 2*np.pi/p
+    x = np.sin(w*t) + np.random.randn(len(t))*1e-2
+    xerr = np.ones_like(x)*1e-2
+    period_grid = np.linspace(.1, 5, nperiods)
+    rm = ss.RotationModel(t, x, xerr)
+    pdm_period, period_err = rm.pdm_rotation(period_grid)
+    print(pdm_period, period_err)
+    fig = rm.pdm_plot()
+    plt.savefig("pdm_test_2")
+
+    # 5 day period
+    np.random.seed(42)
+    p = 5
+    w = 2*np.pi/p
+    x = np.sin(w*t) + np.random.randn(len(t))*1e-2
+    xerr = np.ones_like(x)*1e-2
+    period_grid = np.linspace(.1, 10, nperiods)
+    rm = ss.RotationModel(t, x, xerr)
+    pdm_period, period_err = rm.pdm_rotation(period_grid)
+    print(pdm_period, period_err)
+    fig = rm.pdm_plot()
+    plt.savefig("pdm_test_5")
+
+    # 20 day period
+    p = 20
+    np.random.seed(42)
+    w = 2*np.pi/p
+    x = np.sin(w*t) + np.random.randn(len(t))*1e-2
+    xerr = np.ones_like(x)*1e-2
+    period_grid = np.linspace(5, 30, nperiods)
+    rm = ss.RotationModel(t, x, xerr)
+    pdm_period, period_err = rm.pdm_rotation(period_grid)
+    print(pdm_period, period_err)
+    fig = rm.pdm_plot()
+    plt.savefig("pdm_test_20")
+
+    # 50 day period
+    np.random.seed(42)
+    t = np.linspace(0, 1000, 1000)
+    p = 50
+    w = 2*np.pi/p
+    x = np.sin(w*t) + np.random.randn(len(t))*1e-2
+    xerr = np.ones_like(x)*1e-2
+    period_grid = 10**np.linspace(0, np.log10(200), nperiods)
+    rm = ss.RotationModel(t, x, xerr)
+    pdm_period, period_err = rm.pdm_rotation(period_grid)
+    print(pdm_period, period_err)
+    fig = rm.pdm_plot()
+    plt.savefig("pdm_test_50")
+
+    # 100 day period
+    np.random.seed(42)
+    p = 100
+    w = 2*np.pi/p
+    x = np.sin(w*t) + np.random.randn(len(t))*1e-2
+    xerr = np.ones_like(x)*1e-2
+    period_grid = 10**np.linspace(0, np.log10(200), nperiods)
+    rm = ss.RotationModel(t, x, xerr)
+    pdm_period, period_err = rm.pdm_rotation(period_grid)
+    print(pdm_period, period_err)
+    fig = rm.pdm_plot()
+    plt.savefig("pdm_test_100")
+
 
 
 if __name__ == "__main__":

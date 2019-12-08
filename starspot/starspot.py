@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import astropy.timeseries as ass
 from .phase_dispersion_minimization import phi, calc_phase, phase_bins, \
-    estimate_uncertainty
+    estimate_uncertainty, gaussian
 from tqdm import tqdm, trange
 
 plotpar = {'axes.labelsize': 25,
@@ -195,7 +195,12 @@ class RotationModel(object):
             self.pdm_period = self.pdm_period[0]
 
         # Estimate the uncertainty
-        err, _, _ = estimate_uncertainty(period_grid, phis, period_grid[ind])
+        err, mu, a, b = estimate_uncertainty(period_grid, phis,
+                                               period_grid[ind])
+        self.sigma = err
+        self.mu = mu
+        self.a = a
+        self.b = b
 
         return self.pdm_period, err
 
@@ -223,10 +228,15 @@ class RotationModel(object):
         ax2.set_ylabel("Flux")
 
         ax3 = fig.add_subplot(313)
+        ax3.plot(self.period_grid, gaussian([self.a, self.b, self.mu,
+                                             self.sigma], self.period_grid))
         ax3.plot(self.period_grid, self.phis, "k")
         ax3.set_xlabel("Period [days]")
         ax3.set_ylabel("Dispersion")
         ax3.axvline(self.pdm_period, color=".5", ls="--")
+        ax3.axvline(self.mu, color="C0", ls="--")
+        ax3.axvline(self.mu - self.sigma, ls="--", lw=.5)
+        ax3.axvline(self.mu + self.sigma, ls="--", lw=.5)
         plt.tight_layout()
         return fig
 
