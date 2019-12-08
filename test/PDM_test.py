@@ -174,16 +174,38 @@ def test_phi():
     assert np.isclose(periods[ind], 10, atol=.1)
 
 
-if __name__ == "__main__":
-    test_sj2()
-    test_s2()
+def test_uncertainty():
 
     # Generate some data
     t = np.linspace(0, 100, 1000)
     p = 10
     w = 2*np.pi/p
     x = np.sin(w*t) + np.random.randn(len(t))*1e-2
+    xerr = np.ones_like(x)*1e-2
 
-    test_phase()
-    test_phase_bins()
-    test_phi()
+    import starspot as ss
+    rm = ss.RotationModel(t, x, xerr)
+    nperiods = 200
+    period_grid = np.linspace(1, 20, nperiods)
+    pdm_period, period_err = rm.pdm_rotation(period_grid)
+    print(pdm_period, period_err)
+    fig = rm.pdm_plot()
+    plt.axvline(pdm_period - period_err, ls="--", lw=.5)
+    plt.axvline(pdm_period + period_err, ls="--", lw=.5)
+    plt.savefig("pdm_test")
+
+
+if __name__ == "__main__":
+    # test_sj2()
+    # test_s2()
+
+    # # Generate some data
+    # t = np.linspace(0, 100, 1000)
+    # p = 10
+    # w = 2*np.pi/p
+    # x = np.sin(w*t) + np.random.randn(len(t))*1e-2
+
+    # test_phase()
+    # test_phase_bins()
+    # test_phi()
+    test_uncertainty()

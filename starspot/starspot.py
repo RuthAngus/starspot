@@ -10,7 +10,8 @@ import theano.tensor as tt
 import matplotlib.pyplot as plt
 import pandas as pd
 import astropy.timeseries as ass
-from .phase_dispersion_minimization import phi, calc_phase, phase_bins
+from .phase_dispersion_minimization import phi, calc_phase, phase_bins, \
+    estimate_uncertainty
 from tqdm import tqdm, trange
 
 plotpar = {'axes.labelsize': 25,
@@ -190,7 +191,13 @@ class RotationModel(object):
         # Find period with the lowest Phi
         ind = np.argmin(phis)
         self.pdm_period = period_grid[ind]
-        return period_grid[ind]
+        if hasattr(self.pdm_period, 'len'):
+            self.pdm_period = self.pdm_period[0]
+
+        # Estimate the uncertainty
+        err, _, _ = estimate_uncertainty(period_grid, phis, period_grid[ind])
+
+        return self.pdm_period, err
 
     def pdm_plot(self):
         """

@@ -3,6 +3,8 @@ Phase dispersion minimisation algorithm, Stellingwerf (1978).
 """
 
 import numpy as np
+import scipy.optimize as sco
+import matplotlib.pyplot as plt
 
 
 def sj2(x, meanx, N):
@@ -113,3 +115,56 @@ def phi(nbins, p, t, x):
     total_variance = sj2(x, np.mean(x), len(x))
 
     return total_binned_variance_s2/total_variance
+
+
+def gaussian(pars, x):
+    """
+    A Gaussian, with a baseline of b.
+    """
+    A, b, mu, sigma = pars
+    return b + A/(np.sqrt(2*np.pi)*sigma**2) \
+        * np.exp(-.5*(x - mu)**2/sigma**2)
+
+
+def nll(pars, x, y):
+    model = gaussian(pars, x)
+    return sum(.5*(y - model)**2)
+
+
+def estimate_uncertainty(period_grid, phi, best_period):
+    """
+    Fit a Gaussian to the phase dispersion trough around the minimum and
+    report the sigma.
+
+    Args:
+        period_grid (array): The period grid.
+        phi (array): The phase dispersions over periods.
+
+    Returns:
+        mu, sigma (float): The mean and standard deviation of the Gaussian
+        fit.
+
+    """
+
+    # Peak finder
+    def peaks(y):
+        return np.array([i for i in range(1, len(y)-1) if y[i-1] <
+                         y[i] and y[i+1] < y[i]])
+
+    # limit to a section around the trough.
+    # Find peaks adjacent to the dip.
+    pks = peaks(phi)
+    peak_pos = period_grid[pks]
+    lower_peaks = peak_pos < best_period
+    upper_peaks = peak_pos > best_period
+    lower_lim = peak_pos[lower_peaks][-1]
+    upper_lim = peak_pos[upper_peaks][0]
+
+    m = (lower_lim < period_grid) * (period_grid < upper_lim)
+    dip_x, dip_y = period_grid[m], phi[m]
+
+    result = sco.minimize(nll, [-.1, 1., best_period, .1*best_period],
+                          args=(dip_x, dip_y))
+    plt.plot(dip_x, gaussian(result.x, dip_x))
+    a, b, mu, sigma = result.x
+    return sigma, mu, a
