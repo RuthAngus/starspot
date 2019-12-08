@@ -181,7 +181,6 @@ def estimate_uncertainty(period_grid, phi, best_period):
             period_grid, phi, upper_lim, lower_lim, best_period)
 
     a, b, mu, sigma = result.x
-    print("a = ", a)
 
     return sigma, mu, a, b
 
