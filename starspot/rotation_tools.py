@@ -19,21 +19,23 @@ plotpar = {'axes.labelsize': 25,
            'text.usetex': True}
 plt.rcParams.update(plotpar)
 
-def transit_mask(self, t0, duration, porb):
+def transit_mask(time, t0, duration, porb):
     """
     Mask out transits
 
     Args:
-        t0 (float): The reference time of transit. For Kepler data you may
-            need to subtract 2454833.0 off this number.
-        duration (float): The transit duration.
-        porb (float): The planet's orbital period.
+        t0 (float): The reference time of transit in days.
+            For Kepler data you may need to subtract 2454833.0 off this
+            number.
+        duration (float): The transit duration in hours.
+        porb (float): The planet's orbital period in days.
+
     """
-    _t0 = float(t0) % porb
-    _duration = float(duration) / 24.
-    m = np.abs((self.time - _t0 + 0.5*self.porb) \
-                % self.porb - 0.5*self.porb) < 1.5*_duration
-    return m
+
+    dur = float(duration) / 24.
+    inv_mask = ((time - (t0 - .5*dur)) % porb) < dur
+    mask = inv_mask == False
+    return mask
 
 def download_light_curves(KID, download_path, lcpath):
     """
