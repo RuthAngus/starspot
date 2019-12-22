@@ -8,6 +8,7 @@ import exoplanet as xo
 import pymc3 as pm
 import theano.tensor as tt
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 import pandas as pd
 import astropy.timeseries as ass
 from .phase_dispersion_minimization import phi, calc_phase, phase_bins, \
@@ -16,8 +17,8 @@ from tqdm import tqdm, trange
 
 plotpar = {'axes.labelsize': 25,
            'xtick.labelsize': 20,
-           'ytick.labelsize': 20}
-           #'text.usetex': True}
+           'ytick.labelsize': 20,
+           'text.usetex': True}
 plt.rcParams.update(plotpar)
 
 
@@ -48,7 +49,7 @@ class RotationModel(object):
         plt.ylabel("Relative Flux");
         plt.subplots_adjust(bottom=.2)
 
-    def ls_rotation(self, high_pass=False, min_period=1., max_period=30.,
+    def ls_rotation(self, high_pass=False, min_period=.5, max_period=50.,
                     samples_per_peak=50):
         # filter_period=None, order=3,
         """
@@ -58,12 +59,12 @@ class RotationModel(object):
             high_pass (Optional[bool]): If true, the high pass filtered
                 version of LS periodogram from exoplanet will be used.
             min_period (Optional[float]): The minimum rotation period you'd
-                like to search for. The default is one day since most stars
+                like to search for. The default is 0.5 days since most stars
                 rotate more slowly than this.
             max_period (Optional[float]): The maximum rotation period you'd
                 like to search for. For Kepler this could be as high as 70
                 days but for K2 it should probably be more like 20-25 days
-                and 10-15 days for TESS.
+                and 10-15 days for TESS. Default is 50.
             samples_per_peak (Optional[int]): The number of samples per peak.
 
             filter_period (Optional[float]): The minimum period for a high
@@ -92,7 +93,7 @@ class RotationModel(object):
             return peak["period"]
 
         else:
-            self.freq = np.linspace(1./100, 1./.1, 100000)
+            self.freq = np.linspace(1./max_period, 1./min_period, 100000)
             ps = 1./self.freq
 
 #         if filter_period is not None:
@@ -202,6 +203,10 @@ class RotationModel(object):
         self.a = a
         self.b = b
 
+        # Calculate phase (for plotting)
+        phase = calc_phase(self.pdm_period, self.time)
+        self.phase = phase
+
         return self.pdm_period, err
 
     def pdm_plot(self):
@@ -210,9 +215,8 @@ class RotationModel(object):
 
         """
         # Calculate phase, etc.
-        phase = calc_phase(self.pdm_period, self.time)
         x_means, phase_bs, Ns, sj2s, xb, pb = \
-            phase_bins(self.pdm_nbins, phase, self.flux)
+            phase_bins(self.pdm_nbins, self.phase, self.flux)
         mid_phase_bins = np.diff(phase_bs)*.5 + phase_bs[:-1]
 
         fig = plt.figure(figsize=(16, 9), dpi=200)
@@ -222,7 +226,7 @@ class RotationModel(object):
         ax1.set_ylabel("Flux")
 
         ax2 = fig.add_subplot(312)
-        ax2.plot(phase, self.flux, "k.", alpha=.1)
+        ax2.plot(self.phase, self.flux, "k.", alpha=.1)
         # ax2.errorbar(mid_phase_bins, x_means, yerr=sj2s, fmt=".")
         ax2.set_xlabel("Phase")
         ax2.set_ylabel("Flux")
@@ -237,6 +241,62 @@ class RotationModel(object):
         ax3.axvline(self.mu, color="C0", ls="--")
         ax3.axvline(self.mu - self.sigma, ls="--", lw=.5)
         ax3.axvline(self.mu + self.sigma, ls="--", lw=.5)
+        plt.tight_layout()
+        return fig
+
+    def big_plot(self):
+        """
+        Make a plot of LS periodogram, ACF and PDM, combined. These things
+        must be precomputed.
+
+        """
+
+        outer = gridspec.GridSpec(3, 1, height_ratios = [1, 1, 3])
+        gs0 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec = outer[0])
+        gs1 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec = outer[1])
+        gs2 = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec = outer[2],
+                                               hspace=0)
+
+        fig = plt.figure(figsize=(16, 16), dpi=200)
+        ax1 = fig.add_subplot(gs0[0])
+        ax1.plot(self.time, self.flux, "k.", ms=1, alpha=.5)
+        ax1.set_xlabel("$\mathrm{Time~[days]}$")
+        ax1.set_ylabel("$\mathrm{Normalized~Flux}$")
+
+        ax2 = fig.add_subplot(gs1[0])
+        ax2.plot(self.phase, self.flux, "k.", alpha=.1)
+        ax2.set_xlabel("$\mathrm{Phase~(folded~at~PDM~period)}$")
+        ax2.set_ylabel("$\mathrm{Normalized~Flux}$")
+
+        ax3 = fig.add_subplot(gs2[0])
+        ax3.plot(self.period_grid, gaussian([self.a, self.b, self.mu,
+                                             self.sigma], self.period_grid))
+        ax3.plot(self.period_grid, self.phis, "k")
+        ax3.set_ylabel("$\mathrm{Relative~Dispersion}$")
+        ax3.axvline(self.pdm_period, color=".5", ls="--")
+        ax3.axvline(self.mu, color="C0", ls="--")
+        ax3.axvline(self.mu - self.sigma, ls="--", lw=.5)
+        ax3.axvline(self.mu + self.sigma, ls="--", lw=.5)
+        plt.setp(ax3.get_xticklabels(), visible=False)
+
+        ax4 = fig.add_subplot(gs2[1], sharex=ax3)
+        ax4.plot(1./self.freq, self.power, "k")
+        ax4.axvline(self.ls_period)
+        ax4.axvline(self.ls_period/2., ls="--")
+        ax4.axvline(self.ls_period*2., ls="--")
+        ax4.set_ylabel("$\mathrm{LS-Power}$")
+        ax4.set_xlim(0, max(self.lags))
+        plt.setp(ax4.get_xticklabels(), visible=False)
+
+        ax5 = fig.add_subplot(gs2[2], sharex=ax3)
+        ax5.plot(self.lags, self.acf, "k")
+        ax5.axvline(self.acf_period)
+        ax5.axvline(self.acf_period/2., ls="--")
+        ax5.axvline(self.acf_period*2., ls="--")
+        ax5.set_xlabel("$\mathrm{Time~[days]}$")
+        ax5.set_ylabel("$\mathrm{Autocorrelation}$")
+
+        plt.subplots_adjust(hspace=.1)
         plt.tight_layout()
         return fig
 
