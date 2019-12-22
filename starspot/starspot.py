@@ -202,6 +202,7 @@ class RotationModel(object):
         self.mu = mu
         self.a = a
         self.b = b
+        self.period_err = err
 
         # Calculate phase (for plotting)
         phase = calc_phase(self.pdm_period, self.time)
@@ -262,6 +263,9 @@ class RotationModel(object):
         ax1.plot(self.time, self.flux, "k.", ms=1, alpha=.5)
         ax1.set_xlabel("$\mathrm{Time~[days]}$")
         ax1.set_ylabel("$\mathrm{Normalized~Flux}$")
+        plt.title("LS = {0:.2f} days, ACF = {1:.2f} days, PDM = {2:.2f} +/- {3:.2f} days"
+                  .format(self.ls_period, self.acf_period, self.pdm_period,
+                          self.period_err), fontsize=20)
 
         ax2 = fig.add_subplot(gs1[0])
         ax2.plot(self.phase, self.flux, "k.", alpha=.1)
