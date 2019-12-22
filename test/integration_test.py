@@ -56,25 +56,25 @@ def test_run():
     print(acf_peak_positions[0])
 
 
-def test_gp():
-    starname = "TIC 10863087"
-    lcf = lk.search_lightcurvefile(starname).download()
-    lc = lcf.PDCSAP_FLUX
-    no_nan_lc = lc.remove_nans()
-    clipped_lc = no_nan_lc.remove_outliers(sigma=3)
-    clipped_lc.scatter(alpha=.5, s=.5);
+# def test_gp():
+#     starname = "TIC 10863087"
+#     lcf = lk.search_lightcurvefile(starname).download()
+#     lc = lcf.PDCSAP_FLUX
+#     no_nan_lc = lc.remove_nans()
+#     clipped_lc = no_nan_lc.remove_outliers(sigma=3)
+#     clipped_lc.scatter(alpha=.5, s=.5);
 
-    rotate = ss.RotationModel(clipped_lc.time, clipped_lc.flux, clipped_lc.flux_err)
-    gp_results = rotate.gp_rotation()
-    print("GP period = {0:.2f} + {1:.2f} - {2:.2f}".format(
-        rotate.gp_period, rotate.errp, rotate.errm))
-    rotate.plot_posterior()
+#     rotate = ss.RotationModel(clipped_lc.time, clipped_lc.flux, clipped_lc.flux_err)
+#     gp_results = rotate.gp_rotation()
+#     print("GP period = {0:.2f} + {1:.2f} - {2:.2f}".format(
+#         rotate.gp_period, rotate.errp, rotate.errm))
+#     rotate.plot_posterior()
 
-    plt.hist(rotate.period_samples);
-    plt.xlabel("Period [days]")
-    plt.ylabel("Unnormalized probability")
-    rotate.plot_prediction()
+#     plt.hist(rotate.period_samples);
+#     plt.xlabel("Period [days]")
+#     plt.ylabel("Unnormalized probability")
+#     rotate.plot_prediction()
 
 if __name__ == "__main__":
     test_run()
-    test_gp()
+    # test_gp()

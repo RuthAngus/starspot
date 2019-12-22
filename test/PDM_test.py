@@ -261,16 +261,16 @@ def test_uncertainty():
 
 
 if __name__ == "__main__":
-    # test_sj2()
-    # test_s2()
+    test_sj2()
+    test_s2()
 
-    # # Generate some data
-    # t = np.linspace(0, 100, 1000)
-    # p = 10
-    # w = 2*np.pi/p
-    # x = np.sin(w*t) + np.random.randn(len(t))*1e-2
+    # Generate some data
+    t = np.linspace(0, 100, 1000)
+    p = 10
+    w = 2*np.pi/p
+    x = np.sin(w*t) + np.random.randn(len(t))*1e-2
 
-    # test_phase()
-    # test_phase_bins()
-    # test_phi()
+    test_phase()
+    test_phase_bins()
+    test_phi()
     test_uncertainty()
