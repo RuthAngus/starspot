@@ -273,7 +273,6 @@ class RotationModel(object):
         ax20.set_xlabel("$\mathrm{PDM~Phase}$")
         ax20.set_ylabel("$\mathrm{Normalized~Flux}$")
         ax20.set_xlim(0, 1)
-        plt.setp(ax20.get_yticklabels(), visible=False)
 
         ax21 = fig.add_subplot(gs1[0, 1])
         ls_phase = calc_phase(self.ls_period, self.time)
