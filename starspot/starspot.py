@@ -252,14 +252,15 @@ class RotationModel(object):
 
         """
 
-        outer = gridspec.GridSpec(3, 1, height_ratios = [1, 1, 3])
-        gs0 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec = outer[0])
-        gs1 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec = outer[1])
-        gs2 = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec = outer[2],
+        outer = gridspec.GridSpec(3, 3, height_ratios = [1, 1, 3])
+        gs0 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec = outer[0, :])
+        gs1 = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec = outer[1, :],
+                                               wspace=0)
+        gs2 = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec = outer[2, :],
                                                hspace=0)
 
         fig = plt.figure(figsize=(16, 16), dpi=200)
-        ax1 = fig.add_subplot(gs0[0])
+        ax1 = fig.add_subplot(gs0[0, :])
         ax1.plot(self.time, self.flux, "k.", ms=1, alpha=.5)
         ax1.set_xlabel("$\mathrm{Time~[days]}$")
         ax1.set_ylabel("$\mathrm{Normalized~Flux}$")
@@ -267,12 +268,28 @@ class RotationModel(object):
                   .format(self.ls_period, self.acf_period, self.pdm_period,
                           self.period_err), fontsize=20)
 
-        ax2 = fig.add_subplot(gs1[0])
-        ax2.plot(self.phase, self.flux, "k.", alpha=.1)
-        ax2.set_xlabel("$\mathrm{Phase~(folded~at~PDM~period)}$")
-        ax2.set_ylabel("$\mathrm{Normalized~Flux}$")
+        ax20 = fig.add_subplot(gs1[0, 0])
+        ax20.plot(self.phase, self.flux, "k.", alpha=.1)
+        ax20.set_xlabel("$\mathrm{PDM~Phase}$")
+        ax20.set_ylabel("$\mathrm{Normalized~Flux}$")
+        ax20.set_xlim(0, 1)
+        plt.setp(ax20.get_yticklabels(), visible=False)
 
-        ax3 = fig.add_subplot(gs2[0])
+        ax21 = fig.add_subplot(gs1[0, 1])
+        ls_phase = calc_phase(self.ls_period, self.time)
+        ax21.plot(ls_phase, self.flux, "C0.", alpha=.1)
+        ax21.set_xlabel("$\mathrm{LS~Phase}$")
+        ax21.set_xlim(0, 1)
+        plt.setp(ax21.get_yticklabels(), visible=False)
+
+        ax22 = fig.add_subplot(gs1[0, 2])
+        acf_phase = calc_phase(self.acf_period, self.time)
+        ax22.plot(acf_phase, self.flux, "C1.", alpha=.1)
+        ax22.set_xlabel("$\mathrm{ACF~Phase}$")
+        ax22.set_xlim(0, 1)
+        plt.setp(ax22.get_yticklabels(), visible=False)
+
+        ax3 = fig.add_subplot(gs2[0, :])
         ax3.plot(self.period_grid, gaussian([self.a, self.b, self.mu,
                                              self.sigma], self.period_grid))
         ax3.plot(self.period_grid, self.phis, "k")
@@ -281,18 +298,19 @@ class RotationModel(object):
         ax3.axvline(self.mu, color="C0", ls="--")
         ax3.axvline(self.mu - self.sigma, ls="--", lw=.5)
         ax3.axvline(self.mu + self.sigma, ls="--", lw=.5)
+        ax3.set_xlim(min(self.period_grid), max(self.period_grid))
         plt.setp(ax3.get_xticklabels(), visible=False)
 
-        ax4 = fig.add_subplot(gs2[1], sharex=ax3)
+        ax4 = fig.add_subplot(gs2[1, :], sharex=ax3)
         ax4.plot(1./self.freq, self.power, "k")
         ax4.axvline(self.ls_period)
         ax4.axvline(self.ls_period/2., ls="--")
         ax4.axvline(self.ls_period*2., ls="--")
         ax4.set_ylabel("$\mathrm{LS-Power}$")
-        ax4.set_xlim(0, max(self.lags))
+        # ax4.set_xlim(0, max(self.lags))
         plt.setp(ax4.get_xticklabels(), visible=False)
 
-        ax5 = fig.add_subplot(gs2[2], sharex=ax3)
+        ax5 = fig.add_subplot(gs2[2, :], sharex=ax3)
         ax5.plot(self.lags, self.acf, "k")
         ax5.axvline(self.acf_period)
         ax5.axvline(self.acf_period/2., ls="--")
