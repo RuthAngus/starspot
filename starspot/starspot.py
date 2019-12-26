@@ -274,10 +274,17 @@ class RotationModel(object):
         ax1.plot(self.time, self.flux, "k.", ms=1, alpha=.5)
         ax1.set_xlabel("$\mathrm{Time~[days]}$")
         ax1.set_ylabel("$\mathrm{Normalized~Flux}$")
-        plt.title("LS = {0:.2f} days, ACF = {1:.2f} days, PDM = {2:.2f} " \
-                  "+/- {3:.2f} days"
-                  .format(self.ls_period, self.acf_period, self.pdm_period,
-                          self.period_err), fontsize=20)
+
+        pdm_tit, ls_tit, acf_tit = "", "", ""
+        if np.any(i_s == 0):
+            pdm_tit = "PDM = {0:.2f} +/- {1:.2f} days".format(self.pdm_period,
+                                                              self.period_err)
+        if np.any(i_s == 1):
+            ls_tit = " LS = {0:.2f} days".format(self.ls_period)
+        if np.any(i_s == 2):
+            " ACF = {0:.2f} days".format(self.acf_period)
+
+        plt.title("{0}{1}{2}".format(pdm_tit, ls_tit, acf_tit))
 
         # The phase-fold panel
         # --------------------------------------------------------------------
