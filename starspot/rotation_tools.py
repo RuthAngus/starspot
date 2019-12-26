@@ -157,7 +157,7 @@ def dan_acf(x, axis=0, fast=False):
     # Compute the FFT and then (from that) the auto-correlation function.
     f = np.fft.fft(x-np.mean(x, axis=axis), n=2*n, axis=axis)
     m[axis] = slice(0, n)
-    acf = np.fft.ifft(f * np.conjugate(f), axis=axis)[m].real
+    acf = np.fft.ifft(f * np.conjugate(f), axis=axis)[tuple(m)].real
     m[axis] = 0
     return acf / acf[m]
 
