@@ -36,6 +36,7 @@ class RotationModel(object):
         self.time = time
         self.flux = flux
         self.flux_err = flux_err
+        self.Rvar = np.percentile(flux, 95) - np.percentile(flux, 5)
         # self.LS_rotation()
         # self.ACF_rotation()
 
@@ -245,78 +246,107 @@ class RotationModel(object):
         plt.tight_layout()
         return fig
 
-    def big_plot(self):
+    def big_plot(self, methods=["pdm", "ls", "acf"]):
         """
         Make a plot of LS periodogram, ACF and PDM, combined. These things
         must be precomputed.
 
         """
+        methods = np.array(methods)
+        nmethods = len(methods)
 
-        outer = gridspec.GridSpec(3, 3, height_ratios = [1, 1, 3])
-        gs0 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec = outer[0, :])
-        gs1 = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec = outer[1, :],
-                                               wspace=0)
-        gs2 = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec = outer[2, :],
-                                               hspace=0)
+        # Assemble indices selecting methods to plot.
+        inds, i_s, names = np.arange(3), [], np.array(["pdm", "ls", "acf"])
+        for i in range(nmethods):
+            mask = methods[i] == names
+            i_s.append(int(inds[mask]))
+        i_s = np.array(i_s)
+
+        outer = gridspec.GridSpec(3, nmethods,
+                                  height_ratios=[1, 1, nmethods])
+
+        # The light curve panel
+        # --------------------------------------------------------------------
+        gs0 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=outer[0, :])
 
         fig = plt.figure(figsize=(16, 16), dpi=200)
         ax1 = fig.add_subplot(gs0[0, :])
         ax1.plot(self.time, self.flux, "k.", ms=1, alpha=.5)
         ax1.set_xlabel("$\mathrm{Time~[days]}$")
         ax1.set_ylabel("$\mathrm{Normalized~Flux}$")
-        plt.title("LS = {0:.2f} days, ACF = {1:.2f} days, PDM = {2:.2f} +/- {3:.2f} days"
+        plt.title("LS = {0:.2f} days, ACF = {1:.2f} days, PDM = {2:.2f} " \
+                  "+/- {3:.2f} days"
                   .format(self.ls_period, self.acf_period, self.pdm_period,
                           self.period_err), fontsize=20)
 
-        ax20 = fig.add_subplot(gs1[0, 0])
-        ax20.plot(self.phase, self.flux, "k.", alpha=.1)
-        ax20.set_xlabel("$\mathrm{PDM~Phase}$")
-        ax20.set_ylabel("$\mathrm{Normalized~Flux}$")
-        ax20.set_xlim(0, 1)
+        # The phase-fold panel
+        # --------------------------------------------------------------------
+        gs1 = gridspec.GridSpecFromSubplotSpec(1, nmethods,
+                                               subplot_spec=outer[1, :],
+                                               wspace=0)
 
-        ax21 = fig.add_subplot(gs1[0, 1])
-        ls_phase = calc_phase(self.ls_period, self.time)
-        ax21.plot(ls_phase, self.flux, "C0.", alpha=.1)
-        ax21.set_xlabel("$\mathrm{LS~Phase}$")
-        ax21.set_xlim(0, 1)
-        plt.setp(ax21.get_yticklabels(), visible=False)
+        xs = [self.phase, calc_phase(self.ls_period, self.time),
+              calc_phase(self.acf_period, self.time)]
+        xlabels = ["$\mathrm{PDM~Phase}$", "$\mathrm{LS~Phase}$",
+                   "$\mathrm{ACF~Phase}$"]
 
-        ax22 = fig.add_subplot(gs1[0, 2])
-        acf_phase = calc_phase(self.acf_period, self.time)
-        ax22.plot(acf_phase, self.flux, "C1.", alpha=.1)
-        ax22.set_xlabel("$\mathrm{ACF~Phase}$")
-        ax22.set_xlim(0, 1)
-        plt.setp(ax22.get_yticklabels(), visible=False)
+        def phase_subplot(x, y, i, xlabel):
+            ax = fig.add_subplot(gs1[0, i])
+            ax.plot(x, y, "k.", alpha=.1)
+            ax.set_xlabel(xlabel)
+            ax.set_xlim(0, 1)
+            return ax
 
-        ax3 = fig.add_subplot(gs2[0, :])
-        ax3.plot(self.period_grid, gaussian([self.a, self.b, self.mu,
+        # Plot the panels
+        axs = []
+        for j in range(nmethods):
+            ax = phase_subplot(xs[i_s[j]], self.flux, j, xlabels[i_s[j]])
+            axs.append(ax)
+            if j > 0:
+                plt.setp(ax.get_yticklabels(), visible=False)
+        ax0 = axs[0]
+        ax0.set_ylabel("$\mathrm{Normalized~Flux}$")
+
+        # The method panel
+        # --------------------------------------------------------------------
+        gs2 = gridspec.GridSpecFromSubplotSpec(nmethods, 1,
+                                               subplot_spec=outer[2, :],
+                                               hspace=0)
+
+        mxs = [self.period_grid, 1./self.freq, self.lags]
+        mys = [self.phis, self.power, self.acf]
+        ps = [self.pdm_period, self.ls_period, self.acf_period]
+        ylabels = ["$\mathrm{Relative~Dispersion}$", "$\mathrm{LS-Power}$",
+                   "$\mathrm{Autocorrelation}$"]
+
+        def method_subplot(i, x, y, p, ylabel, sharex):
+            if i == 0:
+                ax = fig.add_subplot(gs2[i, :])
+            else:
+                ax = fig.add_subplot(gs2[i, :], sharex=sharex)
+            ax.plot(x, y, "k")
+            ax.axvline(p)
+            ax.axvline(p/2., ls="--")
+            ax.axvline(p*2., ls="--")
+            ax.set_ylabel(ylabel)
+            return ax
+
+        maxs = []
+        for j in range(nmethods):
+            sharex = ax
+            ax = method_subplot(j, mxs[i_s[j]], mys[i_s[j]], ps[i_s[j]],
+                                ylabels[i_s[j]], sharex)
+            maxs.append(ax)
+
+        # Plot a Gaussian on top of PDM plot
+        axloc_ind = np.arange(len(maxs))[np.array(i_s) == 0]
+        if np.any(i_s == 0):
+            ax3 = maxs[int(axloc_ind)]
+            ax3.plot(self.period_grid, gaussian([self.a, self.b, self.mu,
                                              self.sigma], self.period_grid))
-        ax3.plot(self.period_grid, self.phis, "k")
-        ax3.set_ylabel("$\mathrm{Relative~Dispersion}$")
-        ax3.axvline(self.pdm_period, color=".5", ls="--")
-        ax3.axvline(self.mu, color="C0", ls="--")
-        ax3.axvline(self.mu - self.sigma, ls="--", lw=.5)
-        ax3.axvline(self.mu + self.sigma, ls="--", lw=.5)
-        ax3.set_xlim(min(self.period_grid), max(self.period_grid))
-        plt.setp(ax3.get_xticklabels(), visible=False)
 
-        ax4 = fig.add_subplot(gs2[1, :], sharex=ax3)
-        ax4.plot(1./self.freq, self.power, "k")
-        ax4.axvline(self.ls_period)
-        ax4.axvline(self.ls_period/2., ls="--")
-        ax4.axvline(self.ls_period*2., ls="--")
-        ax4.set_ylabel("$\mathrm{LS-Power}$")
-        # ax4.set_xlim(0, max(self.lags))
-        plt.setp(ax4.get_xticklabels(), visible=False)
-
-        ax5 = fig.add_subplot(gs2[2, :], sharex=ax3)
-        ax5.plot(self.lags, self.acf, "k")
-        ax5.axvline(self.acf_period)
-        ax5.axvline(self.acf_period/2., ls="--")
-        ax5.axvline(self.acf_period*2., ls="--")
+        ax5 = maxs[-1]
         ax5.set_xlabel("$\mathrm{Time~[days]}$")
-        ax5.set_ylabel("$\mathrm{Autocorrelation}$")
-
         plt.subplots_adjust(hspace=.1)
         plt.tight_layout()
         return fig
