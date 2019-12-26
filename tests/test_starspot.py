@@ -37,7 +37,23 @@ def test_acf():
     acf_period = rotate.acf_rotation(interval=0.02043365)
     assert np.isclose(acf_period, 10, atol=1)
 
+    acf_period = rotate.acf_rotation(interval=0.02043365, cutoff=1)
+    assert np.isclose(acf_period, 10, atol=1)
+
+
+def test_rvar():
+    time = np.linspace(0, 100, 1000)
+    p = 10
+    w = 2*np.pi/p
+    flux = np.sin(w*time)
+    flux_err = np.ones_like(flux)*1e-2
+    star = ss.RotationModel(time, flux, flux_err)
+    Rvar = star.calc_Rvar()
+    total_range = max(flux) - min(flux)
+    assert np.isclose(Rvar, total_range, atol=.1)
+
 
 if __name__ == "__main__":
     # test_big_plot()
-    test_acf()
+    # test_acf()
+    test_rvar()

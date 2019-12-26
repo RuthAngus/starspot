@@ -38,8 +38,8 @@ class RotationModel(object):
         self.flux_err = flux_err
         self.Rvar = np.percentile(flux, 95) - np.percentile(flux, 5)
 
-    def Rvar(self):
-        Rvar = = np.percentile(self.flux, 95) - np.percentile(self.flux, 5)
+    def calc_Rvar(self):
+        Rvar = np.percentile(self.flux, 95) - np.percentile(self.flux, 5)
         self.Rvar = Rvar
         return Rvar
 
@@ -262,10 +262,19 @@ class RotationModel(object):
         plt.tight_layout()
         return fig
 
-    def big_plot(self, methods=["pdm", "ls", "acf"], xlim=(0, 50)):
+    def big_plot(self, methods, xlim=(0, 50)):
         """
         Make a plot of LS periodogram, ACF and PDM, combined. These things
         must be precomputed.
+
+        Args:
+            methods (list): A list of period measurement methods to plot. For
+                example, ["pdm", "ls", "acf"], or ["ls", "pdm"].
+            xlim (Optional[tuple]): The xlim for the methods panel. Default
+                is 0-50 days.
+
+        Returns:
+            The figure object.
 
         """
         methods = np.array(methods)
