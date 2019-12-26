@@ -180,7 +180,7 @@ def interp(x_gaps, y_gaps, interval):
     return x, f(x)
 
 
-def simple_acf(x_gaps, y_gaps, interval):
+def simple_acf(x_gaps, y_gaps, interval, smooth=9):
     """
     Compute an autocorrelation function and a period.
 
@@ -192,6 +192,7 @@ def simple_acf(x_gaps, y_gaps, interval):
         y_gaps (array): The flux array.
         interval (Optional[float]): The time interval between successive
             observations. The default is Kepler cadence.
+        smooth (Optional[float]): The smoothing timescale.
 
     Returns:
         lags (array): The array of lag times in days.
@@ -223,7 +224,7 @@ def simple_acf(x_gaps, y_gaps, interval):
     # smooth with Gaussian kernel convolution
     Gaussian = lambda x, sig: 1./(2*np.pi*sig**.5) * np.exp(-0.5*(x**2)/
                                                             (sig**2))
-    conv_func = Gaussian(np.arange(-28, 28, 1.), 9.)
+    conv_func = Gaussian(np.arange(-28, 28, 1.), smooth)
     acf_smooth = np.convolve(acf, conv_func, mode='same')
 
     # just use the second bit (no reflection)
@@ -236,21 +237,7 @@ def simple_acf(x_gaps, y_gaps, interval):
     # ditch the first point
     acf_smooth, lags = acf_smooth[1:], lags[1:]
 
-    # find all the peaks
-    peaks = np.array([i for i in range(1, len(lags)-1)
-                     if acf_smooth[i-1] < acf_smooth[i] and
-                     acf_smooth[i+1] < acf_smooth[i]])
-
-
-    # find the highest peak
-    if len(peaks):
-        m = acf_smooth == max(acf_smooth[peaks])
-        highest_peak = acf_smooth[m][0]
-        period = lags[m][0]
-    else:
-        period = 0.
-
-    return lags, acf_smooth, period
+    return lags, acf_smooth
 
 def find_and_mask_transits(time, flux, flux_err, periods, durations,
                            nplanets=1):

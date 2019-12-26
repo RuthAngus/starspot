@@ -26,5 +26,18 @@ def test_big_plot():
     fig3 = rotate.big_plot(methods=["ls", "acf", "pdm"])
     fig3.savefig("big_plot_test3")
 
+
+def test_acf():
+    time = np.linspace(0, 100, 1000)
+    p = 10
+    w = 2*np.pi/p
+    flux = np.sin(w*time) + np.random.randn(len(time))*1e-2
+    flux_err = np.ones_like(flux)*1e-2
+    rotate = ss.RotationModel(time, flux, flux_err)
+    acf_period = rotate.acf_rotation(interval=0.02043365)
+    assert np.isclose(acf_period, 10, atol=1)
+
+
 if __name__ == "__main__":
-    test_big_plot()
+    # test_big_plot()
+    test_acf()

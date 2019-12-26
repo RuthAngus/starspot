@@ -3,7 +3,7 @@ A script for measuring the rotation periods of a set of stars.
 """
 
 import numpy as np
-from .rotation_tools import simple_acf, butter_bandpass_filter
+from .rotation_tools import simple_acf, get_peak_statistics
 import exoplanet as xo
 import pymc3 as pm
 import theano.tensor as tt
@@ -132,25 +132,38 @@ class RotationModel(object):
         plt.subplots_adjust(left=.15, bottom=.15)
         return fig
 
-    def acf_rotation(self, interval):
+    def acf_rotation(self, interval, smooth=9, cutoff=0):
         """
         Calculate a rotation period based on an autocorrelation function.
 
         Args:
             interval (float): The time in days between observations. For
                 Kepler/K2 long cadence this is 0.02043365, for Tess its about
-                0.00138889 days.
+                0.00138889 days. Use interval = "TESS" or "Kepler" for these.
+            smooth (Optional[float]): The smoothing window in days.
+            cutoff (Optional[float]): The number of days to cut off at the
+                beginning.
 
         Returns:
             acf_period (float): The ACF rotation period in days.
+
         """
+        if interval == "TESS":
+            interval = 0.00138889
+        if interval == "Kepler":
+            interval = 0.02043365
 
-        lags, acf, acf_period = simple_acf(self.time, self.flux, interval)
+        lags, acf = simple_acf(self.time, self.flux, interval, smooth=smooth)
 
-        self.lags = lags
-        self.acf = acf
-        self.acf_period = acf_period
-        return acf_period
+        # find all the peaks
+        m = lags > cutoff
+        xpeaks, ypeaks = get_peak_statistics(lags[m], acf[m],
+                                             sort_by="height")
+
+        self.lags = lags[m]
+        self.acf = acf[m]
+        self.acf_period = xpeaks[0]
+        return xpeaks[0]
 
     def acf_plot(self):
         """
@@ -246,7 +259,7 @@ class RotationModel(object):
         plt.tight_layout()
         return fig
 
-    def big_plot(self, methods=["pdm", "ls", "acf"]):
+    def big_plot(self, methods=["pdm", "ls", "acf"], xlim=(0, 50)):
         """
         Make a plot of LS periodogram, ACF and PDM, combined. These things
         must be precomputed.
@@ -271,18 +284,30 @@ class RotationModel(object):
 
         fig = plt.figure(figsize=(16, 16), dpi=200)
         ax1 = fig.add_subplot(gs0[0, :])
-        ax1.plot(self.time, self.flux, "k.", ms=1, alpha=.5)
+        ax1.plot(self.time, self.flux, "k.", ms=1, alpha=.5, rasterized=True)
         ax1.set_xlabel("$\mathrm{Time~[days]}$")
         ax1.set_ylabel("$\mathrm{Normalized~Flux}$")
 
         pdm_tit, ls_tit, acf_tit = "", "", ""
         if np.any(i_s == 0):
-            pdm_tit = "PDM = {0:.2f} +/- {1:.2f} days".format(self.pdm_period,
+            pdm_tit = "PDM = {0:.2f} +/- {1:.2f} days.".format(self.pdm_period,
                                                               self.period_err)
+            pdm_x, pdm_y, pdm_p = self.period_grid, self.phis, self.pdm_period
+            err, pdm_phase =  self.period_err, self.phase
+        else:
+            pdm_x, pdm_y, pdm_p, err, pdm_phase = None, None, None, None, None
         if np.any(i_s == 1):
-            ls_tit = " LS = {0:.2f} days".format(self.ls_period)
+            ls_tit = " LS = {0:.2f} days.".format(self.ls_period)
+            ls_x, ls_y, ls_p = 1./self.freq, self.power, self.ls_period
+            ls_phase = calc_phase(self.ls_period, self.time)
+        else:
+            ls_x, ls_y, ls_p, ls_phase = None, None, None, None
         if np.any(i_s == 2):
-            " ACF = {0:.2f} days".format(self.acf_period)
+            acf_tit = " ACF = {0:.2f} days.".format(self.acf_period)
+            acf_x, acf_y, acf_p = self.lags, self.acf, self.acf_period
+            acf_phase = calc_phase(self.acf_period, self.time)
+        else:
+            acf_x, acf_y, acf_p, acf_phase = None, None, None, None
 
         plt.title("{0}{1}{2}".format(pdm_tit, ls_tit, acf_tit))
 
@@ -292,14 +317,14 @@ class RotationModel(object):
                                                subplot_spec=outer[1, :],
                                                wspace=0)
 
-        xs = [self.phase, calc_phase(self.ls_period, self.time),
-              calc_phase(self.acf_period, self.time)]
+        xs = [pdm_phase, ls_phase, acf_phase]
         xlabels = ["$\mathrm{PDM~Phase}$", "$\mathrm{LS~Phase}$",
                    "$\mathrm{ACF~Phase}$"]
 
+        colors = ["k", "C0", "C1"]
         def phase_subplot(x, y, i, xlabel):
             ax = fig.add_subplot(gs1[0, i])
-            ax.plot(x, y, "k.", alpha=.1)
+            ax.plot(x, y, ".", color=colors[i], alpha=.1, rasterized=True)
             ax.set_xlabel(xlabel)
             ax.set_xlim(0, 1)
             return ax
@@ -320,9 +345,9 @@ class RotationModel(object):
                                                subplot_spec=outer[2, :],
                                                hspace=0)
 
-        mxs = [self.period_grid, 1./self.freq, self.lags]
-        mys = [self.phis, self.power, self.acf]
-        ps = [self.pdm_period, self.ls_period, self.acf_period]
+        mxs = [pdm_x, ls_x, acf_x]
+        mys = [pdm_y, ls_y, acf_y]
+        ps = [pdm_p, ls_p, acf_p]
         ylabels = ["$\mathrm{Relative~Dispersion}$", "$\mathrm{LS-Power}$",
                    "$\mathrm{Autocorrelation}$"]
 
@@ -331,11 +356,13 @@ class RotationModel(object):
                 ax = fig.add_subplot(gs2[i, :])
             else:
                 ax = fig.add_subplot(gs2[i, :], sharex=sharex)
-            ax.plot(x, y, "k")
+            ax.plot(x, y, "k", rasterized=True)
             ax.axvline(p)
             ax.axvline(p/2., ls="--")
             ax.axvline(p*2., ls="--")
             ax.set_ylabel(ylabel)
+            if xlim is not None:
+                ax.set_xlim(xlim)
             return ax
 
         maxs = []
@@ -344,13 +371,17 @@ class RotationModel(object):
             ax = method_subplot(j, mxs[i_s[j]], mys[i_s[j]], ps[i_s[j]],
                                 ylabels[i_s[j]], sharex)
             maxs.append(ax)
+            if nmethods > 1 and j < nmethods-1:
+                plt.setp(ax.get_xticklabels(), visible=False)
+
 
         # Plot a Gaussian on top of PDM plot
         axloc_ind = np.arange(len(maxs))[np.array(i_s) == 0]
         if np.any(i_s == 0):
             ax3 = maxs[int(axloc_ind)]
             ax3.plot(self.period_grid, gaussian([self.a, self.b, self.mu,
-                                             self.sigma], self.period_grid))
+                                             self.sigma], self.period_grid),
+                     rasterized=True)
 
         ax5 = maxs[-1]
         ax5.set_xlabel("$\mathrm{Time~[days]}$")
