@@ -37,8 +37,11 @@ class RotationModel(object):
         self.flux = flux
         self.flux_err = flux_err
         self.Rvar = np.percentile(flux, 95) - np.percentile(flux, 5)
-        # self.LS_rotation()
-        # self.ACF_rotation()
+
+    def Rvar(self):
+        Rvar = = np.percentile(self.flux, 95) - np.percentile(self.flux, 5)
+        self.Rvar = Rvar
+        return Rvar
 
     def lc_plot(self):
         """
