@@ -168,7 +168,10 @@ def step_model(t, gap_times, steps):
 
     """
     mu = np.zeros(len(t))
-    for i in range(len(gap_times)-1):
-        mu += (t > gap_times[i]) * (t < gap_times[i+1]) * steps[i]
-    mu += (t > gap_times[-1]) * steps[-1]
+    if len(gap_times) > 1:
+        for i in range(len(gap_times)-1):
+            mu += (t >= gap_times[i]) * (t < gap_times[i+1]) * steps[i]
+        mu += (t >= gap_times[-1]) * steps[-1]
+    else:
+        mu = (t >= gap_times) * steps
     return mu
