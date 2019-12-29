@@ -180,7 +180,8 @@ def interp(x_gaps, y_gaps, interval):
     return x, f(x)
 
 
-def simple_acf(x_gaps, y_gaps, interval, smooth=9):
+def simple_acf(x_gaps, y_gaps, interval, smooth=9, window_length=99,
+               polyorder=3):
     """
     Compute an autocorrelation function and a period.
 
@@ -193,6 +194,8 @@ def simple_acf(x_gaps, y_gaps, interval, smooth=9):
         interval (Optional[float]): The time interval between successive
             observations. The default is Kepler cadence.
         smooth (Optional[float]): The smoothing timescale.
+        window_length (Optional[float]): The filter window length.
+        polyorder (Optional[float]): The polynomial order of the filter.
 
     Returns:
         lags (array): The array of lag times in days.
@@ -226,6 +229,10 @@ def simple_acf(x_gaps, y_gaps, interval, smooth=9):
                                                             (sig**2))
     conv_func = Gaussian(np.arange(-28, 28, 1.), smooth)
     acf_smooth = np.convolve(acf, conv_func, mode='same')
+
+    # Smooth the data with a Savitsky-Golay filter.
+    if window_length is not None:
+        acf_smooth = sps.savgol_filter(acf, window_length, polyorder)
 
     # just use the second bit (no reflection)
     acf_smooth, lags = acf_smooth[N:], lags[N:]
@@ -394,3 +401,52 @@ def get_peak_statistics(x, y, sort_by="height"):
         x_peaks, y_peaks = x_peaks[inds], y_peaks[inds]
 
     return x_peaks, y_peaks
+
+
+def filter_sigma_clip(x, y, nsigma=3, window_length=49, polyorder=3):
+    """ Sigma clip a light curve using a Savitzky-Golay filter.
+
+    Args:
+        x (array): The x-data array.
+        y (array): The y-data array.
+        nsigma (Optional[float]): The number of sigma to clip on.
+        window_length (Optional[float]): The filter window length.
+        polyorder (Optional[float]): The polynomial order of the filter.
+
+    Returns:
+        smooth (array): The smoothed data array.
+        mask (array): The mask used for clipping.
+
+    """
+
+    # Smooth the data with a Savitsky-Golay filter.
+    smooth = sps.savgol_filter(y, window_length, polyorder)
+    resids = y - smooth
+
+    # Clip
+    mask = sigma_clip(resids, nsigma=nsigma)
+    return smooth, mask
+
+
+def sigma_clip(x, nsigma=3):
+    """
+    Sigma clipping for 1D data.
+
+    Args:
+        x (array): The data array. Assumed to be Gaussian in 1D.
+        nsigma (float): The number of sigma to clip on.
+
+    Returns:
+        newx (array): The clipped x array.
+        mask (array): The mask used for clipping.
+    """
+
+    m = np.ones(len(x)) == 1
+    newx = x*1
+    oldm = np.array([False])
+    while sum(oldm) != sum(m):
+        oldm = m*1
+        sigma = np.std(newx)
+        m &= np.abs(np.median(newx) - x)/sigma < nsigma
+        newx = x[m]
+    return m
