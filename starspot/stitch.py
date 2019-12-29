@@ -38,21 +38,25 @@ class StitchModel(object):
 
         """
 
+        nsteps = len(self.steps)
         with pm.Model() as model:
 
             # Parameters
             logsigma = pm.Normal("logsigma", mu=0.0, sd=15.0)
             logrho = pm.Normal("logrho", mu=0.0, sd=5.0)
+
+            # Define step variables
             step1 = pm.Normal("step1", mu=self.steps[0], sd=2.0)
-            step2 = pm.Normal("step2", mu=self.steps[1], sd=2.0)
+            steps = step1
+            if nsteps > 1:
+                step2 = pm.Normal("step2", mu=self.steps[1], sd=2.0)
+                steps = [step1, step2]
+            if nsteps > 2:
+                step3 = pm.Normal("step3", mu=self.steps[2], sd=2.0)
+                steps = [step1, step2, step3]
 
             # The step model
-            # mu1 = (self.t > self.gap_times[0]) * \
-            #       (self.t < self.gap_times[1]) * step1
-            # mu2 = (self.t > self.gap_times[1]) * step2
-            # mu = mu1 + mu2
-            mu = step_model(self.t, self.gap_times, [step1, step2])
-            print(mu)
+            mu = step_model(self.t, self.gap_times, steps)
 
             # The likelihood function assuming known Gaussian uncertainty
             pm.Normal("obs", mu=mu, sd=self.yerr, observed=self.y)
@@ -117,9 +121,8 @@ def step_model(t, gap_times, steps):
             functions for the offsets of all subsequent light curves.
 
     """
-
     mu = np.zeros(len(t))
     for i in range(len(gap_times)-1):
         mu += (t > gap_times[i]) * (t < gap_times[i+1]) * steps[i]
-    mu += (t > gap_times[1]) * steps[1]
+    mu += (t > gap_times[-1]) * steps[-1]
     return mu
