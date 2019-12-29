@@ -39,6 +39,16 @@ def test_acf():
 
     acf_period = rotate.acf_rotation(interval=0.02043365, cutoff=1)
     assert np.isclose(acf_period, 10, atol=1)
+    filtered_acf = rotate.acf
+
+    acf_period = rotate.acf_rotation(interval=0.02043365, cutoff=1,
+                                     window_length=None)
+    unfiltered_acf = rotate.acf
+    assert np.isclose(acf_period, 10, atol=1)
+
+    plt.plot(rotate.lags, filtered_acf)
+    plt.plot(rotate.lags, unfiltered_acf)
+    plt.savefig("test_acf")
 
 
 def test_rvar():
@@ -55,5 +65,5 @@ def test_rvar():
 
 if __name__ == "__main__":
     # test_big_plot()
-    # test_acf()
-    test_rvar()
+    test_acf()
+    # test_rvar()
