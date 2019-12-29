@@ -135,7 +135,8 @@ class RotationModel(object):
         plt.subplots_adjust(left=.15, bottom=.15)
         return fig
 
-    def acf_rotation(self, interval, smooth=9, cutoff=0):
+    def acf_rotation(self, interval, smooth=9, cutoff=0, window_length=99,
+                     polyorder=3):
         """
         Calculate a rotation period based on an autocorrelation function.
 
@@ -146,6 +147,8 @@ class RotationModel(object):
             smooth (Optional[float]): The smoothing window in days.
             cutoff (Optional[float]): The number of days to cut off at the
                 beginning.
+            window_length (Optional[float]): The filter window length.
+            polyorder (Optional[float]): The polynomial order of the filter.
 
         Returns:
             acf_period (float): The ACF rotation period in days.
@@ -156,7 +159,9 @@ class RotationModel(object):
         if interval == "Kepler":
             interval = 0.02043365
 
-        lags, acf = simple_acf(self.time, self.flux, interval, smooth=smooth)
+        lags, acf = simple_acf(self.time, self.flux, interval, smooth=smooth,
+                               window_length=window_length,
+                               polyorder=polyorder)
 
         # find all the peaks
         m = lags > cutoff
@@ -296,7 +301,7 @@ class RotationModel(object):
 
         fig = plt.figure(figsize=(16, 16), dpi=200)
         ax1 = fig.add_subplot(gs0[0, :])
-        ax1.plot(self.time, self.flux, "k.", ms=1, alpha=.5, rasterized=True)
+        ax1.plot(self.time, self.flux, ".", lw=.5, alpha=.5, rasterized=True)
         ax1.set_xlabel("$\mathrm{Time~[days]}$")
         ax1.set_ylabel("$\mathrm{Normalized~Flux}$")
 
