@@ -131,7 +131,10 @@ class StitchModel(object):
             map_soln = xo.optimize(start=self.model.test_point)
 
         self.map_soln = map_soln
-        return map_soln
+        success = True
+        if self.map_soln["step1"] == self.steps[0]:
+            sucess = False
+        return map_soln, success
 
     def evaluate_model(self, test_t):
         """
