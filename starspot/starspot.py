@@ -38,10 +38,10 @@ class RotationModel(object):
         self.flux_err = flux_err
         self.Rvar = np.percentile(flux, 95) - np.percentile(flux, 5)
 
-    def calc_Rvar(self):
-        Rvar = np.percentile(self.flux, 95) - np.percentile(self.flux, 5)
-        self.Rvar = Rvar
-        return Rvar
+    # def calc_Rvar(self):
+    #     Rvar = np.percentile(self.flux, 95) - np.percentile(self.flux, 5)
+    #     self.Rvar = Rvar
+    #     return Rvar
 
     def lc_plot(self):
         """
@@ -267,7 +267,7 @@ class RotationModel(object):
         plt.tight_layout()
         return fig
 
-    def big_plot(self, methods, xlim=(0, 50)):
+    def big_plot(self, methods, xlim=None, method_xlim=(0, 50)):
         """
         Make a plot of LS periodogram, ACF and PDM, combined. These things
         must be precomputed.
@@ -275,8 +275,9 @@ class RotationModel(object):
         Args:
             methods (list): A list of period measurement methods to plot. For
                 example, ["pdm", "ls", "acf"], or ["ls", "pdm"].
-            xlim (Optional[tuple]): The xlim for the methods panel. Default
-                is 0-50 days.
+            xlim (Optional[tuple]): The xlim for the light curve panel.
+            method_xlim (Optional[tuple]): The xlim for the methods panel.
+                Default is 0-50 days.
 
         Returns:
             The figure object.
@@ -301,9 +302,15 @@ class RotationModel(object):
 
         fig = plt.figure(figsize=(16, 16), dpi=200)
         ax1 = fig.add_subplot(gs0[0, :])
-        ax1.plot(self.time, self.flux, ".", lw=.5, alpha=.5, rasterized=True)
+        # ax1.plot(self.time, self.flux, "k", lw=.5, rasterized=True)
+        # ax1.errorbar(self.time, self.flux, yerr=self.flux_err,
+                     # fmt="k.", alpha=.1, rasterized=True)
+        ax1.plot(self.time, self.flux, "k.", alpha=.3, mec="none",
+                 rasterized=True)
         ax1.set_xlabel("$\mathrm{Time~[days]}$")
         ax1.set_ylabel("$\mathrm{Normalized~Flux}$")
+        if xlim is not None:
+            ax1.set_xlim(xlim)
 
         pdm_tit, ls_tit, acf_tit = "", "", ""
         if np.any(i_s == 0):
@@ -326,7 +333,7 @@ class RotationModel(object):
         else:
             acf_x, acf_y, acf_p, acf_phase = None, None, None, None
 
-        plt.title("{0}{1}{2}".format(pdm_tit, ls_tit, acf_tit))
+        plt.title("{0}{1}{2}".format(pdm_tit, ls_tit, acf_tit), fontsize=20)
 
         # The phase-fold panel
         # --------------------------------------------------------------------
@@ -378,8 +385,8 @@ class RotationModel(object):
             ax.axvline(p/2., ls="--")
             ax.axvline(p*2., ls="--")
             ax.set_ylabel(ylabel)
-            if xlim is not None:
-                ax.set_xlim(xlim)
+            if method_xlim is not None:
+                ax.set_xlim(method_xlim)
             return ax
 
         maxs = []
