@@ -1,0 +1,4 @@
+*png
+.ipynb_checkpoints
+starspot.egg-info
+__pycache__
