@@ -110,11 +110,14 @@ class RotationModel(object):
         yfilt = self.flux*1
 
         self.power = ass.LombScargle(
-            self.time, yfilt, self.flux_err).power(self.freq)
+            self.time, yfilt).power(self.freq)
         peaks = np.array([i for i in range(1, len(ps)-1) if self.power[i-1] <
                           self.power[i] and self.power[i+1] < self.power[i]])
 
-        self.ls_period = ps[self.power == max(self.power[peaks])][0]
+        if len(peaks) == 0:
+            self.ls_period = 0
+        else:
+            self.ls_period = ps[self.power == max(self.power[peaks])][0]
         return self.ls_period
 
 

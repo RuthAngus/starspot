@@ -18,7 +18,7 @@ def test_sigma_clip():
     t, y = t0[m], y0[m]
 
     # Sigma clip
-    smooth, mask = filter_sigma_clip(t, y, polyorder=2)
+    mask, smooth = filter_sigma_clip(t, y, polyorder=2)
     resids = y - smooth
 
     # Plot results

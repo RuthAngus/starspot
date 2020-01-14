@@ -24,7 +24,7 @@ def filter_sigma_clip(x, y, nsigma=3, window_length=49, polyorder=3):
 
     # Clip
     mask = sigma_clip(resids, nsigma=nsigma)
-    return smooth, mask
+    return mask, smooth
 
 
 def sigma_clip(x, nsigma=3):
