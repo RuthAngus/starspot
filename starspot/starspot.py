@@ -162,9 +162,13 @@ class RotationModel(object):
         if interval == "Kepler":
             interval = 0.02043365
 
-        lags, acf = simple_acf(self.time, self.flux, interval, smooth=smooth,
-                               window_length=window_length,
-                               polyorder=polyorder)
+        lags, acf, _x, _y = simple_acf(self.time, self.flux, interval,
+                                       smooth=smooth,
+                                       window_length=window_length,
+                                       polyorder=polyorder)
+
+        self.acf_x = _x
+        self.acf_y = _y
 
         # find all the peaks
         m = lags > cutoff

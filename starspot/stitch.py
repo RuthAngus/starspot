@@ -105,7 +105,7 @@ class StitchModel(object):
             mu = step_model(self.t, self.gap_times, steps)
 
             # The likelihood function assuming known Gaussian uncertainty
-            pm.Normal("obs", mu=mu, sd=self.yerr, observed=self.y)
+            # pm.Normal("obs", mu=mu, sd=self.yerr, observed=self.y)
 
             # Set up the kernel an GP
             kernel = terms.Matern32Term(log_sigma=logsigma, log_rho=logrho)
@@ -113,7 +113,7 @@ class StitchModel(object):
 
             # Add a custom "potential" (log probability function) with the GP
             # likelihood
-            pm.Potential("gp", gp.log_likelihood(self.y))
+            pm.Potential("gp", gp.log_likelihood(self.y - mu))
 
         self.gp = gp
         self.model = model
