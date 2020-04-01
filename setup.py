@@ -9,5 +9,5 @@ setup(name='starspot',
       author_email='ruthangus@gmail.com',
       license='MIT',
       packages=['starspot'],
-      install_requires=['numpy', 'pandas', 'h5py', 'tqdm', 'emcee', 'exoplanet', 'pymc3', 'theano', 'astropy', 'matplotlib', 'scipy', 'kplr'],
+      install_requires=['numpy', 'pandas', 'h5py', 'tqdm', 'emcee', 'exoplanet', 'pymc3', 'theano', 'astropy', 'matplotlib', 'scipy'],
       zip_safe=False)

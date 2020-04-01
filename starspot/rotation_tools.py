@@ -9,7 +9,7 @@ import glob
 from astropy.io import fits
 import matplotlib.pyplot as plt
 import scipy.interpolate as spi
-import kplr
+# import kplr
 from astropy.stats import BoxLeastSquares
 import scipy.signal as sps
 
@@ -37,28 +37,28 @@ def transit_mask(time, t0, duration, porb):
     mask = inv_mask == False
     return mask
 
-def download_light_curves(KID, download_path, lcpath):
-    """
-    Download Kepler light curves
+# def download_light_curves(KID, download_path, lcpath):
+#     """
+#     Download Kepler light curves
 
-    Args:
-        KID (int): The Kepler ID.
-        download_path (str): The path to where the light curves will be
-            downloaded.
-        lcpath (str): The path to where the light curves are stored (same as
-            download_path with /.kplr/data/lightcurves/<KID>, where KID is a 9
-            digit number.)
+#     Args:
+#         KID (int): The Kepler ID.
+#         download_path (str): The path to where the light curves will be
+#             downloaded.
+#         lcpath (str): The path to where the light curves are stored (same as
+#             download_path with /.kplr/data/lightcurves/<KID>, where KID is a 9
+#             digit number.)
 
-    Returns:
-        time (array): The time array.
-        flux (array): The flux array.
-        flux_err (array): The flux uncertainty array.
-    """
-    client = kplr.API(data_root=download_path)
-    star = client.star(str(int(KID)).zfill(9))
-    star.get_light_curves(fetch=True, short_cadence=False);
-    time, flux, flux_err = load_kepler_data(lcpath)
-    return time, flux, flux_err
+#     Returns:
+#         time (array): The time array.
+#         flux (array): The flux array.
+#         flux_err (array): The flux uncertainty array.
+#     """
+#     client = kplr.API(data_root=download_path)
+#     star = client.star(str(int(KID)).zfill(9))
+#     star.get_light_curves(fetch=True, short_cadence=False);
+#     time, flux, flux_err = load_kepler_data(lcpath)
+#     return time, flux, flux_err
 
 
 def load_kepler_data(LC_DIR):
@@ -244,7 +244,8 @@ def simple_acf(x_gaps, y_gaps, interval, smooth=9, window_length=99,
     # ditch the first point
     acf_smooth, lags = acf_smooth[1:], lags[1:]
 
-    return lags, acf_smooth
+    return lags, acf_smooth, x, y
+
 
 def find_and_mask_transits(time, flux, flux_err, periods, durations,
                            nplanets=1):
