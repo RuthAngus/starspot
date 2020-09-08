@@ -10,7 +10,7 @@ from astropy.io import fits
 import matplotlib.pyplot as plt
 import scipy.interpolate as spi
 # import kplr
-from astropy.stats import BoxLeastSquares
+from astropy.timeseries import BoxLeastSquares
 import scipy.signal as sps
 
 plotpar = {'axes.labelsize': 25,
@@ -27,12 +27,12 @@ def transit_mask(time, t0, duration, porb):
         t0 (float): The reference time of transit in days.
             For Kepler data you may need to subtract 2454833.0 off this
             number.
-        duration (float): The transit duration in hours.
+        duration (float): The transit duration in days.
         porb (float): The planet's orbital period in days.
 
     """
 
-    dur = float(duration) / 24.
+    dur = float(duration)
     inv_mask = ((time - (t0 - .5*dur)) % porb) < dur
     mask = inv_mask == False
     return mask
@@ -248,7 +248,7 @@ def simple_acf(x_gaps, y_gaps, interval, smooth=9, window_length=99,
 
 
 def find_and_mask_transits(time, flux, flux_err, periods, durations,
-                           nplanets=1):
+                           nplanets=1, plot=False):
     """
     Iteratively find and mask transits in the flattened light curve.
 
@@ -279,42 +279,38 @@ def find_and_mask_transits(time, flux, flux_err, periods, durations,
         bls = BoxLeastSquares(t=_time, y=_flux, dy=_flux_err)
         bls.power(periods, durations)
 
-        print("periods")
         periods = bls.autoperiod(durations, minimum_n_transit=3,
                                  frequency_factor=5.0)
-        print("results")
         results = bls.autopower(durations, frequency_factor=5.0)
 
         # Find the period of the peak
-        print("find_period")
         period = results.period[np.argmax(results.power)]
 
-        print("extract")
         # Extract the parameters of the best-fit model
         index = np.argmax(results.power)
         porbs[i] = results.period[index]
         t0s[i] = results.transit_time[index]
         durs[i] = results.duration[index]
 
-        # # Plot the periodogram
-        # fig, ax = plt.subplots(1, 1, figsize=(10, 5))
-        # ax.plot(results.period, results.power, "k", lw=0.5)
-        # ax.set_xlim(results.period.min(), results.period.max())
-        # ax.set_xlabel("period [days]")
-        # ax.set_ylabel("log likelihood")
+        if plot:
+            # Plot the periodogram
+            fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+            ax.plot(results.period, results.power, "k", lw=0.5)
+            ax.set_xlim(results.period.min(), results.period.max())
+            ax.set_xlabel("period [days]")
+            ax.set_ylabel("log likelihood")
 
-        # # Highlight the harmonics of the peak period
-        # ax.axvline(period, alpha=0.4, lw=4)
-        # for n in range(2, 10):
-        #     ax.axvline(n*period, alpha=0.4, lw=1, linestyle="dashed")
-        #     ax.axvline(period / n, alpha=0.4, lw=1, linestyle="dashed")
-        # plt.show()
+            # Highlight the harmonics of the peak period
+            ax.axvline(period, alpha=0.4, lw=4)
+            for n in range(2, 10):
+                ax.axvline(n*period, alpha=0.4, lw=1, linestyle="dashed")
+                ax.axvline(period / n, alpha=0.4, lw=1, linestyle="dashed")
+            # plt.show()
 
-        # plt.plot(_time, _flux, ".")
-        # plt.xlim(1355, 1360)
+            # plt.plot(_time, _flux, ".")
+            # plt.xlim(1355, 1360)
 
-        print("mask")
-        in_transit = bls.transit_mask(_time, porbs[i], 2*durs[i], t0s[i])
+        in_transit = bls.transit_mask(_time, porbs[i], durs[i], t0s[i])
         transit_masks.append(in_transit)
         _time, _flux, _flux_err = _time[~in_transit], _flux[~in_transit], \
             _flux_err[~in_transit]
