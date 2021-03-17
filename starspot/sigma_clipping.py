@@ -9,8 +9,11 @@ def filter_sigma_clip(x, y, nsigma=3, window_length=49, polyorder=3):
         x (array): The x-data array.
         y (array): The y-data array.
         nsigma (Optional[float]): The number of sigma to clip on.
+            Default = 3.
         window_length (Optional[float]): The filter window length.
+            Must be an odd number. Default = 49.
         polyorder (Optional[float]): The polynomial order of the filter.
+            Default = 3.
 
     Returns:
         smooth (array): The smoothed data array.
