@@ -17,14 +17,14 @@ def test_big_plot():
     acf_period = rotate.acf_rotation(interval=0.02043365)
     pdm_period, period_err = rotate.pdm_rotation(rotate.lags, pdm_nbins=10)
 
-    fig1 = rotate.big_plot()
-    fig1.savefig("big_plot_test")
+    # fig1 = rotate.big_plot()
+    # fig1.savefig("big_plot_test")
 
-    fig2 = rotate.big_plot(methods=["ls", "acf"])
-    fig2.savefig("big_plot_test2")
+    # fig2 = rotate.big_plot(methods=["ls", "acf"])
+    # fig2.savefig("big_plot_test2")
 
-    fig3 = rotate.big_plot(methods=["ls", "acf", "pdm"])
-    fig3.savefig("big_plot_test3")
+    # fig3 = rotate.big_plot(methods=["ls", "acf", "pdm"])
+    # fig3.savefig("big_plot_test3")
 
 
 def test_acf():
@@ -46,21 +46,21 @@ def test_acf():
     unfiltered_acf = rotate.acf
     assert np.isclose(acf_period, 10, atol=1)
 
-    plt.plot(rotate.lags, filtered_acf)
-    plt.plot(rotate.lags, unfiltered_acf)
-    plt.savefig("test_acf")
+    # plt.plot(rotate.lags, filtered_acf)
+    # plt.plot(rotate.lags, unfiltered_acf)
+    # plt.savefig("test_acf")
 
 
-def test_rvar():
-    time = np.linspace(0, 100, 1000)
-    p = 10
-    w = 2*np.pi/p
-    flux = np.sin(w*time)
-    flux_err = np.ones_like(flux)*1e-2
-    star = ss.RotationModel(time, flux, flux_err)
-    Rvar = star.calc_Rvar()
-    total_range = max(flux) - min(flux)
-    assert np.isclose(Rvar, total_range, atol=.1)
+# def test_rvar():
+#     time = np.linspace(0, 100, 1000)
+#     p = 10
+#     w = 2*np.pi/p
+#     flux = np.sin(w*time)
+#     flux_err = np.ones_like(flux)*1e-2
+#     star = ss.RotationModel(time, flux, flux_err)
+#     Rvar = star.calc_Rvar()
+#     total_range = max(flux) - min(flux)
+#     assert np.isclose(Rvar, total_range, atol=.1)
 
 
 if __name__ == "__main__":

@@ -190,8 +190,8 @@ def test_uncertainty():
     period_grid = np.linspace(1, 20, nperiods)
     pdm_period, period_err = rm.pdm_rotation(period_grid)
     print(pdm_period, period_err)
-    fig = rm.pdm_plot()
-    plt.savefig("pdm_test")
+    # fig = rm.pdm_plot()
+    # plt.savefig("pdm_test")
 
     # 2 day period
     np.random.seed(42)
@@ -203,8 +203,8 @@ def test_uncertainty():
     rm = ss.RotationModel(t, x, xerr)
     pdm_period, period_err = rm.pdm_rotation(period_grid)
     print(pdm_period, period_err)
-    fig = rm.pdm_plot()
-    plt.savefig("pdm_test_2")
+    # fig = rm.pdm_plot()
+    # plt.savefig("pdm_test_2")
 
     # 5 day period
     np.random.seed(42)
@@ -216,8 +216,8 @@ def test_uncertainty():
     rm = ss.RotationModel(t, x, xerr)
     pdm_period, period_err = rm.pdm_rotation(period_grid)
     print(pdm_period, period_err)
-    fig = rm.pdm_plot()
-    plt.savefig("pdm_test_5")
+    # fig = rm.pdm_plot()
+    # plt.savefig("pdm_test_5")
 
     # 20 day period
     p = 20
@@ -229,8 +229,8 @@ def test_uncertainty():
     rm = ss.RotationModel(t, x, xerr)
     pdm_period, period_err = rm.pdm_rotation(period_grid)
     print(pdm_period, period_err)
-    fig = rm.pdm_plot()
-    plt.savefig("pdm_test_20")
+    # fig = rm.pdm_plot()
+    # plt.savefig("pdm_test_20")
 
     # 50 day period
     np.random.seed(42)
@@ -243,8 +243,8 @@ def test_uncertainty():
     rm = ss.RotationModel(t, x, xerr)
     pdm_period, period_err = rm.pdm_rotation(period_grid)
     print(pdm_period, period_err)
-    fig = rm.pdm_plot()
-    plt.savefig("pdm_test_50")
+    # fig = rm.pdm_plot()
+    # plt.savefig("pdm_test_50")
 
     # 100 day period
     np.random.seed(42)
@@ -256,8 +256,8 @@ def test_uncertainty():
     rm = ss.RotationModel(t, x, xerr)
     pdm_period, period_err = rm.pdm_rotation(period_grid)
     print(pdm_period, period_err)
-    fig = rm.pdm_plot()
-    plt.savefig("pdm_test_100")
+    # fig = rm.pdm_plot()
+    # plt.savefig("pdm_test_100")
 
 
 if __name__ == "__main__":
