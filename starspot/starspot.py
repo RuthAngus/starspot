@@ -10,7 +10,7 @@ import theano.tensor as tt
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import pandas as pd
-import astropy.timeseries as ass
+import astropy.timeseries as apt
 from .phase_dispersion_minimization import phi, calc_phase, phase_bins, \
     estimate_uncertainty, gaussian
 from tqdm import tqdm, trange
@@ -54,14 +54,13 @@ class RotationModel(object):
         plt.subplots_adjust(bottom=.2)
 
     def ls_rotation(self, high_pass=False, min_period=.5, max_period=50.,
-                    samples_per_peak=50):
+                    samples_per_peak=50, input_freq=None, input_power=None,
+                    input_ls_period=None):
         # filter_period=None, order=3,
         """
         Measure a rotation period using a Lomb-Scargle periodogram.
 
         Args:
-            high_pass (Optional[bool]): If true, the high pass filtered
-                version of LS periodogram from exoplanet will be used.
             min_period (Optional[float]): The minimum rotation period you'd
                 like to search for. The default is 0.5 days since most stars
                 rotate more slowly than this.
@@ -71,46 +70,27 @@ class RotationModel(object):
                 and 10-15 days for TESS. Default is 50.
             samples_per_peak (Optional[int]): The number of samples per peak.
 
-            filter_period (Optional[float]): The minimum period for a high
-                pass filter. Signals with periods longer than this will be
-                removed. For Kepler it's reasonable to set this to 35.
-                Default is None.
-            order (Optional[int]): The order of the Butterworth filter.
-                Default is 3.
-
         Returns:
             ls_period (float): The Lomb-Scargle rotation period.
 
         """
+        if input_freq is not None and input_power is not None:
+            self.freq = input_freq
+            self.power = input_power
+        else:
+            self.freq = np.linspace(1./max_period, 1./min_period, 100000)
+
+        if input_ls_period is not None:
+            self.ls_period = input_ls_period
+            return input_ls_period
 
         assert len(self.flux) == sum(np.isfinite(self.flux)), "Remove NaNs" \
             " from your flux array before trying to compute a periodogram."
 
-        if high_pass == True:
-        # Calculate a LS period with a filter using exoplanet.
-            results = xo.estimators.lomb_scargle_estimator(
-                self.time, self.flux, max_peaks=1, min_period=min_period,
-                max_period=max_period, samples_per_peak=samples_per_peak)
-            self.freq, self.power = results["periodogram"]
-            peak = results["peaks"][0]
-            self.ls_period = peak["period"]
-            return peak["period"]
+        self.power = apt.LombScargle(
+            self.time, self.flux).power(self.freq)
 
-        else:
-            self.freq = np.linspace(1./max_period, 1./min_period, 100000)
-            ps = 1./self.freq
-
-#         if filter_period is not None:
-#                 fs = 1./(self.time[1] - self.time[0])
-#                 lowcut = 1./filter_period
-#                 yfilt = butter_bandpass_filter(self.flux, lowcut, fs,
-#                                                   order=3)
-#         else:
-
-        yfilt = self.flux*1
-
-        self.power = ass.LombScargle(
-            self.time, yfilt).power(self.freq)
+        ps = 1./self.freq
         peaks = np.array([i for i in range(1, len(ps)-1) if self.power[i-1] <
                           self.power[i] and self.power[i+1] < self.power[i]])
 

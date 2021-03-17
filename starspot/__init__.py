@@ -4,5 +4,5 @@
 from .rotation_tools import *
 from .starspot import *
 from .phase_dispersion_minimization import *
-from .stitch import *
+# from .stitch import *
 from .sigma_clipping import *
