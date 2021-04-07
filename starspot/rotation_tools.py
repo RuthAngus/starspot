@@ -162,7 +162,7 @@ def dan_acf(x, axis=0, fast=False):
     return acf / acf[m]
 
 
-def interp(x_gaps, y_gaps, interval):
+def interp(x_gaps, y_gaps, interval, interp_style="zero"):
     """
     Interpolate the light curve
 
@@ -170,18 +170,20 @@ def interp(x_gaps, y_gaps, interval):
         x_gaps (array): The time array with gaps.
         y_gaps (array): The flux array with gaps.
         interval (float): The grid to interpolate to.
+        interp_style (string): The type of interpolation, e.g. "zero" or
+            "linear". The default is "zero".
 
     Returns:
         time (array): The interpolated time array.
         flux (array): The interpolated flux array.
     """
-    f = spi.interp1d(x_gaps, y_gaps, kind="zero")
+    f = spi.interp1d(x_gaps, y_gaps, kind=interp_style)
     x = np.arange(x_gaps[0], x_gaps[-1], interval)
     return x, f(x)
 
 
 def simple_acf(x_gaps, y_gaps, interval, smooth=9, window_length=99,
-               polyorder=3):
+               polyorder=3, interp_style="zero"):
     """
     Compute an autocorrelation function and a period.
 
@@ -196,6 +198,8 @@ def simple_acf(x_gaps, y_gaps, interval, smooth=9, window_length=99,
         smooth (Optional[float]): The smoothing timescale.
         window_length (Optional[float]): The filter window length.
         polyorder (Optional[float]): The polynomial order of the filter.
+        interp_style (string): The type of interpolation, e.g. "zero" or
+            "linear". The default is "zero".
 
     Returns:
         lags (array): The array of lag times in days.
@@ -204,7 +208,7 @@ def simple_acf(x_gaps, y_gaps, interval, smooth=9, window_length=99,
     """
 
     # First of all: interpolate to an evenly spaced grid
-    x, y = interp(x_gaps, y_gaps, interval)
+    x, y = interp(x_gaps, y_gaps, interval, interp_style=interp_style)
 
     # fit and subtract straight line
     AT = np.vstack((x, np.ones_like(x)))
@@ -218,31 +222,20 @@ def simple_acf(x_gaps, y_gaps, interval, smooth=9, window_length=99,
     # create 'lags' array
     lags = np.arange(len(acf))*interval
 
+    # ditch the first point
+    acf, lags = acf[1:], lags[1:]
+
     N = len(acf)
     double_acf, double_lags = [np.zeros((2*N)) for i in range(2)]
     double_acf[:N], double_lags[:N] = acf[::-1], -lags[::-1]
     double_acf[N:], double_lags[N:] = acf, lags
     acf, lags = double_acf, double_lags
 
-    # smooth with Gaussian kernel convolution
-    Gaussian = lambda x, sig: 1./(2*np.pi*sig**.5) * np.exp(-0.5*(x**2)/
-                                                            (sig**2))
-    conv_func = Gaussian(np.arange(-28, 28, 1.), smooth)
-    acf_smooth = np.convolve(acf, conv_func, mode='same')
-
     # Smooth the data with a Savitsky-Golay filter.
-    if window_length is not None:
-        acf_smooth = sps.savgol_filter(acf, window_length, polyorder)
+    acf_smooth = sps.savgol_filter(acf, window_length, polyorder)
 
     # just use the second bit (no reflection)
     acf_smooth, lags = acf_smooth[N:], lags[N:]
-
-    # cut it in half
-    m = lags < max(lags)/2.
-    acf_smooth, lags = acf_smooth[m], lags[m]
-
-    # ditch the first point
-    acf_smooth, lags = acf_smooth[1:], lags[1:]
 
     return lags, acf_smooth, x, y
 
